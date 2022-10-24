@@ -1697,13 +1697,26 @@ void LightListenDDP()
       continue;
     }
   }
+  uint16_t payload_size = payload.size();
 
+
+  //Support different kinds of lights
   // No verification checks performed against packet besides length
-  if (payload.size() > 12) {
-    ddp_color[0] = payload[10];
-    ddp_color[1] = payload[11];
-    ddp_color[2] = payload[12];
+  switch(TasmotaGlobal.light_type){
+    case LT_RGBWC:
+      if(payload_size > 14)
+        ddp_color[5] = payload[14];
+    case LT_RGBW:
+      if(payload_size > 13)
+        ddp_color[4] = payload[13];
+    case LT_RGB:
+      if(payload_size > 12)
+        ddp_color[0] = payload[10];
+        ddp_color[1] = payload[11];
+        ddp_color[2] = payload[12];      
+      break;
   }
+  
   light_state.setChannels(ddp_color);
   light_controller.calcLevels(Light.new_color);
 }
