@@ -1673,16 +1673,14 @@ void LightListenDDP()
 
   // Can't be trying to initialize UDP too early.
   if (TasmotaGlobal.restart_flag || TasmotaGlobal.global_state.network_down) {
-    light_state.setChannels(ddp_color);
-    light_controller.calcLevels(Light.new_color);
+    light_controller.changeChannels(ddp_color);
     return;
   }
 
   // Start DDP listener, if fail, just set last ddp_color
   if (!ddp_udp_up) {
     if (!ddp_udp.begin(4048)) {
-      light_state.setChannels(ddp_color);
-      light_controller.calcLevels(Light.new_color);
+      light_controller.changeChannels(ddp_color);
       return;
     }
     ddp_udp_up = 1;
@@ -1702,23 +1700,29 @@ void LightListenDDP()
 
   //Support different kinds of lights
   // No verification checks performed against packet besides length
-  switch(TasmotaGlobal.light_type){
-    case LT_RGBWC:
+  switch(Light.subtype){
+    case LST_RGBCW:
       if(payload_size > 14)
-        ddp_color[5] = payload[14];
-    case LT_RGBW:
+        ddp_color[4] = payload[14];
+
+    case LST_RGBW:
       if(payload_size > 13)
-        ddp_color[4] = payload[13];
-    case LT_RGB:
+        ddp_color[3] = payload[13];
+
+    case LST_RGB:
       if(payload_size > 12)
-        ddp_color[0] = payload[10];
+        ddp_color[2] = payload[12];
+
+    case LST_COLDWARM:
+      if(payload_size > 11)
         ddp_color[1] = payload[11];
-        ddp_color[2] = payload[12];      
+
+    case LST_SINGLE:
+      if(payload_size > 10)
+          ddp_color[0] = payload[10];      
       break;
   }
-  
-  light_state.setChannels(ddp_color);
-  light_controller.calcLevels(Light.new_color);
+  light_controller.changeChannels(ddp_color);
 }
 #endif
 
